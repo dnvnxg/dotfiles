@@ -1,16 +1,14 @@
 ;;; ci-build.el --- CI Entry Point for Quartz Site
 
-;; 1. Setup Package Manager (MELPA)
+;; 1. Initialize Package Manager
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
 
-;; Refresh package list if it's empty (happens in fresh containers)
 (unless package-archive-contents
   (package-refresh-contents))
 
 ;; 2. Install Dependencies
-;; ox-hugo will automatically pull in 'tomelr'
 (unless (package-installed-p 'ox-hugo)
   (package-install 'ox-hugo))
 
@@ -19,19 +17,34 @@
 
 ;; 3. Define the Build Function
 (defun build-quartz-site ()
-  "Export all org files in 'my-org-files' to hugo markdown."
+  "Export org files to hugo markdown, skipping invalid files."
   (message "Starting Quartz Export...")
-
-  ;; Global configs for the export
+  
+  ;; --- CONFIGURATION START ---
+  ;; 1. Force timestamps to update
   (setq org-hugo-auto-set-lastmod t)
-
+  
+  ;; 2. THE FIX: Tell ox-hugo where the "root" of the site is.
+  ;; We set it to the directory where the org files are checked out.
+  (setq org-hugo-base-dir (file-truename "my-org-files"))
+  ;; --- CONFIGURATION END ---
+  
   (let ((org-files (directory-files-recursively "my-org-files" "\\.org$")))
     (dolist (file org-files)
-      (unless (string-match-p "/\\.github/" file)
-        (message "Processing: %s" file)
+      ;; Skip .github folder and any file in a "finance" directory
+      (unless (or (string-match-p "/\\.github/" file)
+                  (string-match-p "/finance/" file))
         (with-current-buffer (find-file-noselect file)
-          ;; This exports based on the #+HUGO_BASE_DIR or default export paths
-          (org-hugo-export-wim-to-md :all-subtrees)
+          (condition-case err
+              (if (save-excursion 
+                    (goto-char (point-min))
+                    (re-search-forward "^#\\+title:" nil t))
+                  (progn
+                    (message "Exporting: %s" file)
+                    ;; Export!
+                    (org-hugo-export-wim-to-md :all-subtrees))
+                (message "Skipping: %s (No #+title found)" file))
+            ;; Error handler
+            (error (message "ERROR processing %s: %s" file (error-message-string err))))
           (kill-buffer)))))
-
   (message "Export Complete."))
