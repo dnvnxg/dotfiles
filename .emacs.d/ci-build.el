@@ -23,6 +23,7 @@
   ;; --- CONFIGURATION START ---
   ;; 1. Force timestamps to update
   (setq org-hugo-auto-set-lastmod t)
+  (setq org-hugo-front-matter-format "yaml")
   
   ;; 2. THE FIX: Tell ox-hugo where the "root" of the site is.
   ;; We set it to the directory where the org files are checked out.
