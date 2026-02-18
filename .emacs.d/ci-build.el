@@ -18,7 +18,8 @@
 ;; 3. Helper function to compute hugo_section from file path
 (defun get-hugo-section-for-file (file base-dir)
   "Get the hugo_section for a file based on its directory.
-   Simply extract the directory part of the file path and strip my-org-files/ prefix."
+   Simply extract the directory part of the file path and strip my-org-files/ prefix.
+   Converts to uppercase to match directory structure."
   (let* (;; Get directory of file, removing my-org-files/ prefix if present
          (raw-dir (file-name-directory file))
          ;; Strip my-org-files/ from the beginning
@@ -27,8 +28,8 @@
                     raw-dir)))
     (if (or (null stripped) (string= stripped "") (string= stripped "./"))
         "."
-      ;; Remove trailing slash
-      (directory-file-name stripped))))
+      ;; Remove trailing slash and convert to uppercase
+      (upcase (directory-file-name stripped)))))
 
 ;; 4. Define the Build Function
 (defun build-quartz-site ()
