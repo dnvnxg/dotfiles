@@ -25,7 +25,12 @@
    - my-org-files/cue/blog/001.org -> \"cue/blog\""
   (let* ((file-abs (file-truename file))
          (base-abs (file-truename base-dir))
-         (rel-path (file-relative-name file-abs base-abs))
+         ;; Ensure base-dir ends with / for proper prefix stripping
+         (base-abs-with-slash (if (string-suffix-p "/" base-abs) base-abs (concat base-abs "/")))
+         ;; Get path relative to base directory
+         (rel-path (if (string-prefix-p base-abs-with-slash file-abs)
+                       (substring file-abs (length base-abs-with-slash))
+                     (file-relative-name file-abs base-abs)))
          (dir-path (file-name-directory rel-path)))
     (if (or (null dir-path) (string= dir-path "") (string= dir-path "./"))
         "."
@@ -40,7 +45,10 @@
   ;; --- CONFIGURATION START ---
   (setq org-hugo-auto-set-lastmod t)
   (setq org-hugo-front-matter-format "yaml")
-  (setq org-hugo-base-dir (file-truename "my-org-files"))
+  ;; IMPORTANT: org-hugo-base-dir must point to the Hugo site ROOT (where content/ folder is)
+  ;; NOT the source org files directory!
+  ;; Adjust this path to your actual Hugo project root
+  (setq org-hugo-base-dir (file-truename "."))  ;; Change this to your Hugo project root path
   ;; --- CONFIGURATION END ---
   
   (let ((org-files (directory-files-recursively "my-org-files" "\\.org$"))
