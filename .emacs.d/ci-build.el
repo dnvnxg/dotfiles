@@ -15,21 +15,29 @@
 (require 'ox-hugo)
 (require 'org)
 
-;; 3. Helper function to compute hugo_section from file path
+;; 3. Helper function to convert string to title case
+(defun title-case (str)
+  "Convert string to title case (e.g., 'CUE' -> 'Cue', 'MY-FOLDER' -> 'My-folder')"
+  (let ((lower (downcase str)))
+    (concat (upcase (substring lower 0 1)) (substring lower 1))))
+
+;; 4. Helper function to compute hugo_section from file path
 (defun get-hugo-section-for-file (file base-dir)
   "Get the hugo_section for a file based on its directory.
    Simply extract the directory part of the file path and strip my-org-files/ prefix.
-   Converts to uppercase to match directory structure."
+   Converts path components to title case."
   (let* (;; Get directory of file, removing my-org-files/ prefix if present
          (raw-dir (file-name-directory file))
          ;; Strip my-org-files/ from the beginning
          (stripped (if (string-prefix-p "my-org-files/" raw-dir)
                       (substring raw-dir (length "my-org-files/"))
-                    raw-dir)))
-    (if (or (null stripped) (string= stripped "") (string= stripped "./"))
+                    raw-dir))
+         ;; Remove trailing slash
+         (clean-path (directory-file-name stripped)))
+    (if (or (null clean-path) (string= clean-path "") (string= clean-path "./"))
         "."
-      ;; Remove trailing slash and convert to uppercase
-      (upcase (directory-file-name stripped)))))
+      ;; Convert each path component to title case
+      (mapconcat 'title-case (split-string clean-path "/") "/"))))
 
 ;; 4. Define the Build Function
 (defun build-quartz-site ()
