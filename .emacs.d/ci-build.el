@@ -18,24 +18,17 @@
 ;; 3. Helper function to compute hugo_section from file path
 (defun get-hugo-section-for-file (file base-dir)
   "Get the hugo_section for a file based on its directory.
-   
-   Examples:
-   - my-org-files/index.org -> \".\"
-   - my-org-files/cue/cue.org -> \"cue\"
-   - my-org-files/cue/blog/001.org -> \"cue/blog\""
-  (let* ((file-abs (file-truename file))
-         (base-abs (file-truename base-dir))
-         ;; Ensure base-dir ends with / for proper prefix stripping
-         (base-abs-with-slash (if (string-suffix-p "/" base-abs) base-abs (concat base-abs "/")))
-         ;; Get path relative to base directory
-         (rel-path (if (string-prefix-p base-abs-with-slash file-abs)
-                       (substring file-abs (length base-abs-with-slash))
-                     (file-relative-name file-abs base-abs)))
-         (dir-path (file-name-directory rel-path)))
-    (if (or (null dir-path) (string= dir-path "") (string= dir-path "./"))
+   Simply extract the directory part of the file path and strip my-org-files/ prefix."
+  (let* (;; Get directory of file, removing my-org-files/ prefix if present
+         (raw-dir (file-name-directory file))
+         ;; Strip my-org-files/ from the beginning
+         (stripped (if (string-prefix-p "my-org-files/" raw-dir)
+                      (substring raw-dir (length "my-org-files/"))
+                    raw-dir)))
+    (if (or (null stripped) (string= stripped "") (string= stripped "./"))
         "."
       ;; Remove trailing slash
-      (directory-file-name dir-path))))
+      (directory-file-name stripped))))
 
 ;; 4. Define the Build Function
 (defun build-quartz-site ()
@@ -46,9 +39,8 @@
   (setq org-hugo-auto-set-lastmod t)
   (setq org-hugo-front-matter-format "yaml")
   ;; IMPORTANT: org-hugo-base-dir must point to the Hugo site ROOT (where content/ folder is)
-  ;; NOT the source org files directory!
-  ;; Adjust this path to your actual Hugo project root
-  (setq org-hugo-base-dir (file-truename "."))  ;; Change this to your Hugo project root path
+  ;; During CI, this runs from the donovan.fyi repo root, so "." is correct
+  (setq org-hugo-base-dir (file-truename "."))
   ;; --- CONFIGURATION END ---
   
   (let ((org-files (directory-files-recursively "my-org-files" "\\.org$"))
