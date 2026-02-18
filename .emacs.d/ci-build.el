@@ -39,6 +39,17 @@
       ;; Convert each path component to title case
       (mapconcat 'title-case (split-string clean-path "/") "/"))))
 
+;; 5. Helper function to check if file should be exported as folder index
+(defun should-export-as-index (file)
+  "Check if file is named same as its parent folder (e.g., CUE/CUE.org).
+   If so, it should be exported as index.md."
+  (let* ((dir-parts (split-string (file-name-directory file) "/" t))
+         (file-name (file-name-sans-extension (file-name-nondirectory file)))
+         (parent-folder (car (last dir-parts))))
+    (and parent-folder
+         file-name
+         (string-equal (downcase file-name) (downcase parent-folder)))))
+
 ;; 4. Define the Build Function
 (defun build-quartz-site ()
   "Export org files to hugo markdown, auto-detecting section from directory."
@@ -65,10 +76,17 @@
                     (re-search-forward "^#\\+title:" nil t))
                   (progn
                     ;; Compute hugo_section from file directory
-                    (let ((hugo-section (get-hugo-section-for-file file base-dir)))
-                      (message "Processing: %s -> section: %s" file hugo-section)
+                    (let ((hugo-section (get-hugo-section-for-file file base-dir))
+                          (is-folder-index (should-export-as-index file)))
+                      (message "Processing: %s -> section: %s (folder-index: %s)" file hugo-section is-folder-index)
                       ;; Set hugo_section as buffer-local variable for this export
                       (setq-local org-hugo-section hugo-section)
+                      ;; If this is a folder-level note, add EXPORT_FILE_NAME property
+                      (when is-folder-index
+                        (goto-char (point-min))
+                        (re-search-forward "^#\\+TITLE:" nil t)
+                        (end-of-line)
+                        (insert "\n#+EXPORT_FILE_NAME: index"))
                       ;; Export!
                       (org-hugo-export-wim-to-md :all-subtrees)))
                 (message "Skipping: %s (No #+title found)" file))
