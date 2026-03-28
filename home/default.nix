@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, lib, ... }: {
   home.stateVersion = "24.11";
   home.username = "dxgriego";
   home.homeDirectory = "/Users/dxgriego";
@@ -16,9 +16,17 @@
     };
   };
 
+  programs.emacs = {
+    enable = true;
+  };
+
   home.file.".gnupg/gpg-agent.conf".text = ''
     pinentry-program ${pkgs.pinentry-curses}/bin/pinentry-curses
     enable-ssh-support
+  '';
+
+  home.activation.importGpgKey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${pkgs.gnupg}/bin/gpg --import ${../keys/gpg-public-key.asc} 2>/dev/null || true
   '';
 
   programs.zsh = {
