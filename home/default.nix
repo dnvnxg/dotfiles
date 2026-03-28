@@ -1,5 +1,8 @@
 { pkgs, lib, ... }:
 let
+  isDarwin = pkgs.stdenv.isDarwin;
+  isLinux = pkgs.stdenv.isLinux;
+
   gitRepos = [
     { url = "git@github.com:dnvnxg/password-store.git"; dest = ".password-store"; }
   ];
@@ -12,7 +15,7 @@ let
 in {
   home.stateVersion = "24.11";
   home.username = "dxgriego";
-  home.homeDirectory = "/Users/dxgriego";
+  home.homeDirectory = if isDarwin then "/Users/dxgriego" else "/home/dxgriego";
 
   programs.gpg = {
     enable = true;
@@ -55,7 +58,7 @@ in {
     enable = true;
     enableSshSupport = true;
     enableZshIntegration = true;
-    pinentry.package = pkgs.pinentry_mac;
+    pinentry.package = if isDarwin then pkgs.pinentry_mac else pkgs.pinentry-gnome3;
     sshKeys = [
       "FCFAB8956F7D22D724ADBCDF115E9F19FB57ACAC"
       "C8338759CFB21F019F81EC429D77B0119309B030"
