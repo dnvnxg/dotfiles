@@ -1,4 +1,15 @@
-{ pkgs, lib, ... }: {
+{ pkgs, lib, ... }:
+let
+  gitRepos = [
+    { url = "git@github.com:dnvnxg/password-store.git"; dest = ".password-store"; }
+  ];
+
+  cloneScript = lib.concatStringsSep "\n" (map (repo: ''
+    if [ ! -d "$HOME/${repo.dest}" ]; then
+      GIT_SSH_COMMAND="${pkgs.openssh}/bin/ssh" ${pkgs.git}/bin/git clone ${repo.url} "$HOME/${repo.dest}"
+    fi
+  '') gitRepos);
+in {
   home.stateVersion = "24.11";
   home.username = "dxgriego";
   home.homeDirectory = "/Users/dxgriego";
@@ -29,13 +40,11 @@
     settings = {};
   };
 
-  home.activation.clonePasswordStore = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if [ ! -d "$HOME/.password-store" ]; then
-      export GPG_TTY=$(tty)
-      export SSH_AUTH_SOCK=$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)
-      ${pkgs.gnupg}/bin/gpgconf --launch gpg-agent
-      GIT_SSH_COMMAND="${pkgs.openssh}/bin/ssh" ${pkgs.git}/bin/git clone git@github.com:dnvnxg/password-store.git "$HOME/.password-store"
-    fi
+  home.activation.cloneRepos = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    export GPG_TTY=$(tty)
+    export SSH_AUTH_SOCK=$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)
+    ${pkgs.gnupg}/bin/gpgconf --launch gpg-agent
+    ${cloneScript}
   '';
 
   programs.emacs = {
