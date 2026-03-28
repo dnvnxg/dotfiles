@@ -5,6 +5,7 @@ let
 
   gitRepos = [
     { url = "git@github.com:dnvnxg/password-store.git"; dest = ".password-store"; }
+    { url = "git@github.com:dnvnxg/org.git"; dest = "org"; }
   ];
 
   cloneScript = lib.concatStringsSep "\n" (map (repo: ''
