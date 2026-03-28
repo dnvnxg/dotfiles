@@ -3,7 +3,12 @@
   home.username = "dxgriego";
   home.homeDirectory = "/Users/dxgriego";
 
-  programs.gpg.enable = true;
+  programs.gpg = {
+    enable = true;
+    settings = {
+      group = "me = DFEE781D6F6CA99B! 60AFB3575B788937!";
+    };
+  };
 
   programs.git = {
     enable = true;
