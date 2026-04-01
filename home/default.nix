@@ -21,7 +21,7 @@ in {
   programs.gpg = {
     enable = true;
     settings = {
-      group = "me = DFEE781D6F6CA99B! 60AFB3575B788937!";
+      group = "me = DFEE781D6F6CA99B! 60AFB3575B788937! C0FEDC1571CD7CC0!";
     };
     publicKeys = [
       { source = ../keys/gpg-public-key.asc; trust = 5; }
