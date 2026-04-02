@@ -11,7 +11,6 @@
 
   outputs = { self, nixpkgs, nix-darwin, home-manager, ... }: {
     darwinConfigurations."Donovans-MacBook-Pro" = nix-darwin.lib.darwinSystem {
-      system = "aarch64-darwin";
       modules = [
         ./hosts/macbook/configuration.nix
         home-manager.darwinModules.home-manager
