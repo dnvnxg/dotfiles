@@ -2,6 +2,7 @@
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
+  gpgKeys = import ../keys/gpg-keys.nix;
 
   gitRepos = [
     { url = "git@github.com:dnvnxg/password-store.git"; dest = ".password-store"; }
@@ -21,7 +22,7 @@ in {
   programs.gpg = {
     enable = true;
     settings = {
-      group = "me = DFEE781D6F6CA99B! 60AFB3575B788937! C0FEDC1571CD7CC0!";
+      group = "me = ${lib.concatMapStringsSep " " (k: "${k}!") gpgKeys.encryptionSubkeys}";
     };
     publicKeys = [
       { source = ../keys/gpg-public-key.asc; trust = 5; }
@@ -33,7 +34,7 @@ in {
     settings.user.name = "Donovan Xavier Griego";
     settings.user.email = "dxgriego@gmail.com";
     signing = {
-      key = "41EBCEA20BCE406E";
+      key = gpgKeys.signingKey;
       signByDefault = true;
       format = "openpgp";
     };
@@ -60,11 +61,10 @@ in {
     enableSshSupport = true;
     enableZshIntegration = true;
     pinentry.package = if isDarwin then pkgs.pinentry_mac else pkgs.pinentry-gnome3;
-    sshKeys = [
-      "FCFAB8956F7D22D724ADBCDF115E9F19FB57ACAC"
-      "C8338759CFB21F019F81EC429D77B0119309B030"
-    ];
+    sshKeys = gpgKeys.sshKeygrips;
   };
+
+  home.file.".ssh/authorized_keys".text = lib.concatStringsSep "\n" gpgKeys.sshPublicKeys + "\n";
 
   programs.zsh = {
     enable = true;
