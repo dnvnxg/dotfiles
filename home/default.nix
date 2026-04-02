@@ -94,6 +94,13 @@ in {
       '';
     };
 
+    home.activation.configureDotfilesRemote = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if [ -d "$HOME/dotfiles/.git" ]; then
+        $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$HOME/dotfiles" remote set-url origin https://github.com/dnvnxg/dotfiles.git
+        $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$HOME/dotfiles" remote set-url --push origin git@github.com:dnvnxg/dotfiles.git
+      fi
+    '';
+
     home.activation.cloneRepos = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       export GPG_TTY=$(tty)
       export SSH_AUTH_SOCK=$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)
