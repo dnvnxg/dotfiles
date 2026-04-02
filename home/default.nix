@@ -43,7 +43,7 @@ in {
     programs.gpg = {
       enable = true;
       settings = {
-        group = "me = ${lib.concatMapStringsSep " " (k: "${k}!") gpgKeys.encryptionSubkeys}";
+        group = "me=${lib.concatMapStringsSep " " (k: "${k}!") gpgKeys.encryptionSubkeys}";
       };
       publicKeys = [
         { source = ../keys/gpg-public-key.asc; trust = 5; }
