@@ -9,7 +9,7 @@
     casks = [
       "claude"
       "discord"
-      "emacs"
+      "emacs-app"
       "godot"
       "scroll-reverser"
       "yubico-yubikey-manager"
