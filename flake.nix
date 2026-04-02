@@ -19,6 +19,7 @@
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.users.dxgriego = import ./home/default.nix;
+          home-manager.extraSpecialArgs = { username = "dxgriego"; };
           users.users.dxgriego.home = "/Users/dxgriego";
         }
       ];
