@@ -8,7 +8,7 @@
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   security.sudo.extraConfig = ''
-    dxgriego ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild
+    dxgriego ALL=(ALL) NOPASSWD: /nix/store/*/bin/darwin-rebuild
   '';
 
   system.stateVersion = 6;
