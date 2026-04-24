@@ -108,6 +108,11 @@ in {
       ${cloneScript}
     '';
 
+    programs.direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
+
     programs.emacs = {
       enable = true;
     };
