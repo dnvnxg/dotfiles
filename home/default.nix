@@ -153,6 +153,7 @@ in {
       enable = true;
       initContent = ''
         export GPG_TTY=$(tty)
+        [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
       '';
     };
   };
