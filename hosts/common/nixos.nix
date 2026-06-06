@@ -1,6 +1,5 @@
 { config, ... }: {
-  nixpkgs.config.allowUnfree = true;
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  imports = [ ./nix.nix ];
 
   security.sudo.extraRules = [{
     users = [ config.system.primaryUser ];
