@@ -63,10 +63,8 @@ in {
 
     programs.password-store = {
       enable = lib.any (r: r.dest == ".password-store") cfg.gitRepos;
-      settings = {};
+      settings = { }; # explicit empty: keep pass on ~/.password-store, not the legacy XDG default
     };
-
-    home.packages = [ pkgs.git ];
 
     home.file.".local/bin/dotfiles-sync" = {
       executable = true;
@@ -113,10 +111,6 @@ in {
       nix-direnv.enable = true;
     };
 
-    programs.emacs = {
-      enable = true;
-    };
-
     services.gpg-agent = {
       enable = true;
       enableSshSupport = true;
@@ -157,7 +151,6 @@ in {
     programs.zsh = {
       enable = true;
       initContent = ''
-        export GPG_TTY=$(tty)
         [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
       '';
     };
