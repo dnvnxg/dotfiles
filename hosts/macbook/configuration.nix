@@ -1,16 +1,19 @@
 { pkgs, ... }: {
   environment.systemPackages = with pkgs; [
     yubikey-manager
-    claude-code
   ];
 
   homebrew = {
     enable = true;
+    brews = [
+      "opencode"
+    ];
     casks = [
       "claude"
       "discord"
       "emacs-app"
       "godot"
+      "opencode-desktop"
       "scroll-reverser"
       "yubico-yubikey-manager"
     ];

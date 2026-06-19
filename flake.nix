@@ -8,6 +8,13 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    # Pin Homebrew to a release new enough to recognize macOS 27 (golden_gate);
+    # the version vendored by nix-homebrew tops out at macOS 26 (tahoe).
+    brew-src = {
+      url = "github:Homebrew/brew/6.0.2";
+      flake = false;
+    };
+    nix-homebrew.inputs.brew-src.follows = "brew-src";
   };
 
   outputs = { self, nixpkgs, nix-darwin, home-manager, nix-homebrew, ... }:
