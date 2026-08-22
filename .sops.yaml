@@ -11,3 +11,5 @@ creation_rules:
     key_groups:
       - pgp:
           - 4968AA085CEBE8832D16B364AAE23FD4504DB519 # YubiKey OpenPGP
+        age:
+          - age1l0tr4mk0eecstj43m24lyekwy9f9ddq7qf06e72w8vgjpkaq7caqhmx9jc # Donovans-MacBook-Pro
