@@ -1,19 +1,17 @@
 {
-  signingKey = "41EBCEA20BCE406E";
+  signingKey = "4968AA085CEBE8832D16B364AAE23FD4504DB519";
 
+  # Both YubiKeys hold identical subkeys, so there is one keygrip,
+  # one encryption subkey and one SSH key regardless of which card is inserted.
   sshKeygrips = [
-    "FCFAB8956F7D22D724ADBCDF115E9F19FB57ACAC" # YubiKey 17983945
-    "C8338759CFB21F019F81EC429D77B0119309B030" # YubiKey 37148342
+    "B49B74B8CF7A9BE3A50807F80E2EE056239167E9" # [A] subkey 0xF3FE43769684A001
   ];
 
   encryptionSubkeys = [
-    "DFEE781D6F6CA99B" # YubiKey 17983945
-    "60AFB3575B788937" # YubiKey 37148342
-    "C0FEDC1571CD7CC0" # YubiKey 37148342 (recovery)
+    "F51D5E1AB9D5FCE2" # [E] subkey
   ];
 
   sshPublicKeys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOx9yYI00oOjKVBWzABcYyLqrYxc4gnc0ED5IUPJPaEq" # YubiKey 17983945
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH87Tm+bcuA6z0wRiGz5efA+3LDXxLcgT0OQKVm1eFL9" # YubiKey 37148342
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ+98NazV+u5uJbw+jZrGK2s1RWBTNnqN/G+vxhqRBUa openpgp:0x9684A001"
   ];
 }
