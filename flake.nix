@@ -49,6 +49,20 @@
       ] ++ extraModules;
     };
 
+    # Home config for a host someone else administers: user-level tooling only.
+    mkGuestHome = system: home-manager.lib.homeManagerConfiguration {
+      pkgs = nixpkgs.legacyPackages.${system};
+      extraSpecialArgs = { username = "dxgriego"; };
+      modules = [
+        sops-nix.homeManagerModules.sops
+        ./home/default.nix
+        {
+          custom.personalMachine = false;
+          custom.gitRepos = [ ];
+        }
+      ];
+    };
+
     mkNixos = { hostname, username, system ? "x86_64-linux", extraModules ? [] }: nixpkgs.lib.nixosSystem {
       inherit system;
       specialArgs = { inherit username; };
@@ -71,6 +85,17 @@
       ] ++ extraModules;
     };
   in {
+    # Consumable by other flakes (e.g. a future servers repo):
+    #   home-manager.users.dxgriego = inputs.dotfiles.homeModules.default;
+    homeModules.default = ./home/default.nix;
+
+    # Standalone, for a box I do not administer:
+    #   home-manager switch --flake github:dnvnxg/dotfiles#dxgriego
+    homeConfigurations = {
+      "dxgriego" = mkGuestHome "x86_64-linux";
+      "dxgriego-aarch64" = mkGuestHome "aarch64-linux";
+    };
+
     # `nix run .#enroll-host` - add this machine as an age recipient so it can
     # decrypt secrets unattended. Needs a YubiKey once, then never again.
     apps = forAllSystems (pkgs: {

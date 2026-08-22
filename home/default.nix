@@ -21,6 +21,19 @@ in {
       type = lib.types.str;
       default = "dxgriego@gmail.com";
     };
+    personalMachine = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Whether this is a machine I own and administer.
+
+        Set false when dropping this config onto a host someone else runs.
+        That restricts it to user-level tooling: it will not manage
+        authorized_keys, clone personal repos, decrypt secrets, or assume a
+        graphical session for pinentry.
+      '';
+    };
+
     gitRepos = lib.mkOption {
       type = lib.types.listOf (lib.types.submodule {
         options = {
@@ -63,46 +76,22 @@ in {
       settings = { }; # explicit empty: keep pass on ~/.password-store, not the legacy XDG default
     };
 
-    home.file.".local/bin/dotfiles-sync" = {
-      executable = true;
-      text = ''
-        #!/usr/bin/env bash
-        set -euo pipefail
-
-        GPG_TTY=$(tty 2>/dev/null) || true
-        export GPG_TTY
-        export SSH_AUTH_SOCK=$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)
-
-        DOTFILES="$HOME/dotfiles"
-        REBUILD_CMD="${if isDarwin then "sudo darwin-rebuild" else "sudo nixos-rebuild"}"
-
-        cd "$DOTFILES"
-        ${pkgs.git}/bin/git fetch origin
-
-        LOCAL=$(${pkgs.git}/bin/git rev-parse HEAD)
-        REMOTE=$(${pkgs.git}/bin/git rev-parse @{u})
-
-        if [ "$LOCAL" != "$REMOTE" ]; then
-          ${pkgs.git}/bin/git pull --ff-only
-          $REBUILD_CMD switch --flake "$DOTFILES"
-        fi
-      '';
-    };
-
-    home.activation.configureDotfilesRemote = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    home.activation.configureDotfilesRemote =
+      lib.mkIf cfg.personalMachine (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if [ -d "$HOME/dotfiles/.git" ]; then
         $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$HOME/dotfiles" remote set-url origin https://github.com/dnvnxg/dotfiles.git
         $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$HOME/dotfiles" remote set-url --push origin git@github.com:dnvnxg/dotfiles.git
       fi
-    '';
+    '');
 
-    home.activation.cloneRepos = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    home.activation.cloneRepos =
+      lib.mkIf (cfg.personalMachine && cfg.gitRepos != [ ]) (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       GPG_TTY=$(tty 2>/dev/null) || true
       export GPG_TTY
       export SSH_AUTH_SOCK=$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)
       ${pkgs.gnupg}/bin/gpgconf --launch gpg-agent
       ${cloneScript}
-    '';
+    '');
 
     programs.direnv = {
       enable = true;
@@ -113,37 +102,17 @@ in {
       enable = true;
       enableSshSupport = true;
       enableZshIntegration = true;
-      pinentry.package = if isDarwin then pkgs.pinentry_mac else pkgs.pinentry-gnome3;
+      pinentry.package =
+        if isDarwin then pkgs.pinentry_mac
+        else if cfg.personalMachine then pkgs.pinentry-gnome3
+        else pkgs.pinentry-curses;
       sshKeys = gpgKeys.sshKeygrips;
     };
 
-    home.file.".ssh/authorized_keys".text = lib.concatStringsSep "\n" gpgKeys.sshPublicKeys + "\n";
-
-    launchd.agents.dotfiles-sync = lib.mkIf isDarwin {
-      enable = true;
-      config = {
-        ProgramArguments = [ "${homeDir}/.local/bin/dotfiles-sync" ];
-        StartInterval = 300;
-        StandardOutPath = "${homeDir}/.local/share/dotfiles-sync/stdout.log";
-        StandardErrorPath = "${homeDir}/.local/share/dotfiles-sync/stderr.log";
-      };
-    };
-
-    systemd.user.services.dotfiles-sync = lib.mkIf isLinux {
-      Unit.Description = "Sync and rebuild dotfiles";
-      Service = {
-        Type = "oneshot";
-        ExecStart = "%h/.local/bin/dotfiles-sync";
-      };
-    };
-
-    systemd.user.timers.dotfiles-sync = lib.mkIf isLinux {
-      Unit.Description = "Sync and rebuild dotfiles timer";
-      Timer = {
-        OnBootSec = "5m";
-        OnUnitActiveSec = "5m";
-      };
-      Install.WantedBy = [ "timers.target" ];
+    # Only manage authorized_keys on machines I administer - clobbering it on
+    # someone else's host can lock me out of the session I am connected over.
+    home.file.".ssh/authorized_keys" = lib.mkIf cfg.personalMachine {
+      text = lib.concatStringsSep "\n" gpgKeys.sshPublicKeys + "\n";
     };
 
     home.packages = [ pkgs.sops ];
@@ -151,7 +120,7 @@ in {
     # Secrets are committed to this repo encrypted to the OpenPGP key in keys/.
     # Decryption happens in a launchd agent (darwin) / user service (linux) at
     # login and on activation, so a YubiKey must be inserted at that point.
-    sops = {
+    sops = lib.mkIf cfg.personalMachine {
       defaultSopsFile = ../secrets/secrets.yaml;
       # Per-machine age key: lets this host decrypt at login with no PIN.
       # Generated on first activation; authorized via `nix run .#enroll-host`.
