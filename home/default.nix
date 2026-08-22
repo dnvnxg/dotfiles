@@ -42,9 +42,6 @@ in {
 
     programs.gpg = {
       enable = true;
-      settings = {
-        group = "me=${lib.concatMapStringsSep " " (k: "${k}!") gpgKeys.encryptionSubkeys}";
-      };
       publicKeys = [
         { source = ../keys/gpg-public-key.asc; trust = 5; }
       ];
@@ -100,7 +97,8 @@ in {
     '';
 
     home.activation.cloneRepos = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      export GPG_TTY=$(tty)
+      GPG_TTY=$(tty 2>/dev/null) || true
+      export GPG_TTY
       export SSH_AUTH_SOCK=$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)
       ${pkgs.gnupg}/bin/gpgconf --launch gpg-agent
       ${cloneScript}
@@ -155,9 +153,18 @@ in {
     # login and on activation, so a YubiKey must be inserted at that point.
     sops = {
       defaultSopsFile = ../secrets/secrets.yaml;
-      gnupg = {
-        home = "${homeDir}/.gnupg";
-        sshKeyPaths = [ ];  # mutually exclusive with gnupg.home
+      # Per-machine age key: lets this host decrypt at login with no PIN.
+      # Generated on first activation; authorized via `nix run .#enroll-host`.
+      #
+      # sops-install-secrets accepts exactly one key source, so this cannot
+      # also list gnupg.home. The OpenPGP key stays a recipient in .sops.yaml
+      # regardless, so the YubiKey still authors and edits secrets via the
+      # sops CLI - it just isn't what unattended decryption uses.
+      # Until this host is enrolled, decryption here fails and secrets are
+      # simply absent.
+      age = {
+        keyFile = "${homeDir}/.config/sops/age/keys.txt";
+        generateKey = true;
       };
       secrets.openrouter_api_key = { };
     };
@@ -165,7 +172,14 @@ in {
     programs.zsh = {
       enable = true;
       # Login shells only: decrypt once, let every child shell inherit.
+      # Adopted from the pre-home-manager ~/.zprofile left by the Homebrew
+      # installer and pipx; that file blocked activation while unmanaged.
       profileExtra = ''
+        ${lib.optionalString isDarwin ''
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        ''}
+        export PATH="$PATH:$HOME/.local/bin"
+
         _sops_secrets="$HOME/.config/sops-nix/secrets"
         [ -r "$_sops_secrets/openrouter_api_key" ] \
           && export OPENROUTER_API_KEY="$(cat "$_sops_secrets/openrouter_api_key")"

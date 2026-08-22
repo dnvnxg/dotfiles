@@ -1,10 +1,13 @@
 # Recipients for sops-encrypted files in this repo.
-# Both YubiKeys hold the same subkeys, so one entry covers either card.
-keys:
-  - &dxgriego 4968AA085CEBE8832D16B364AAE23FD4504DB519
-
+#
+# The OpenPGP key is the human recipient: it authors and edits secrets, and it
+# authorizes new machines. Both YubiKeys hold identical subkeys, so one entry
+# covers either card.
+#
+# The age list below is per-machine and is managed by `nix run .#enroll-host`.
+# Those keys exist so each host can decrypt unattended at login without a PIN.
 creation_rules:
   - path_regex: secrets/[^/]+\.yaml$
     key_groups:
       - pgp:
-          - *dxgriego
+          - 4968AA085CEBE8832D16B364AAE23FD4504DB519 # YubiKey OpenPGP

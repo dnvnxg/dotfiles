@@ -21,7 +21,11 @@
 
   outputs = { self, nixpkgs, nix-darwin, home-manager, nix-homebrew, sops-nix, ... }:
   let
+    systems = [ "aarch64-darwin" "x86_64-darwin" "aarch64-linux" "x86_64-linux" ];
+    forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+
     mkDarwin = { hostname, username, extraModules ? [] }: nix-darwin.lib.darwinSystem {
+      specialArgs = { inherit username; };
       modules = [
         ./hosts/common/darwin.nix
         home-manager.darwinModules.home-manager
@@ -47,6 +51,7 @@
 
     mkNixos = { hostname, username, system ? "x86_64-linux", extraModules ? [] }: nixpkgs.lib.nixosSystem {
       inherit system;
+      specialArgs = { inherit username; };
       modules = [
         ./hosts/common/nixos.nix
         home-manager.nixosModules.home-manager
@@ -61,12 +66,24 @@
             home = "/home/${username}";
             extraGroups = [ "wheel" ];
           };
-          system.primaryUser = username;
           networking.hostName = hostname;
         }
       ] ++ extraModules;
     };
   in {
+    # `nix run .#enroll-host` - add this machine as an age recipient so it can
+    # decrypt secrets unattended. Needs a YubiKey once, then never again.
+    apps = forAllSystems (pkgs: {
+      enroll-host = {
+        type = "app";
+        program = "${pkgs.writeShellApplication {
+          name = "enroll-host";
+          runtimeInputs = with pkgs; [ age sops git gnupg python3 ];
+          text = builtins.readFile ./scripts/enroll-host.sh;
+        }}/bin/enroll-host";
+      };
+    });
+
     darwinConfigurations."Donovans-MacBook-Pro" = mkDarwin {
       hostname = "Donovans-MacBook-Pro";
       username = "dxgriego";

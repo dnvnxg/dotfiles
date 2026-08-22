@@ -1,8 +1,8 @@
-{ config, ... }: {
+{ username, ... }: {
   imports = [ ./nix.nix ];
 
   security.sudo.extraRules = [{
-    users = [ config.system.primaryUser ];
+    users = [ username ];
     commands = [{
       command = "/run/current-system/sw/bin/nixos-rebuild";
       options = [ "NOPASSWD" ];
