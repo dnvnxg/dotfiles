@@ -1,0 +1,10 @@
+# Recipients for sops-encrypted files in this repo.
+# Both YubiKeys hold the same subkeys, so one entry covers either card.
+keys:
+  - &dxgriego 4968AA085CEBE8832D16B364AAE23FD4504DB519
+
+creation_rules:
+  - path_regex: secrets/[^/]+\.yaml$
+    key_groups:
+      - pgp:
+          - *dxgriego

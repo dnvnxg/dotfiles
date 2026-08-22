@@ -148,8 +148,29 @@ in {
       Install.WantedBy = [ "timers.target" ];
     };
 
+    home.packages = [ pkgs.sops ];
+
+    # Secrets are committed to this repo encrypted to the OpenPGP key in keys/.
+    # Decryption happens in a launchd agent (darwin) / user service (linux) at
+    # login and on activation, so a YubiKey must be inserted at that point.
+    sops = {
+      defaultSopsFile = ../secrets/secrets.yaml;
+      gnupg = {
+        home = "${homeDir}/.gnupg";
+        sshKeyPaths = [ ];  # mutually exclusive with gnupg.home
+      };
+      secrets.openrouter_api_key = { };
+    };
+
     programs.zsh = {
       enable = true;
+      # Login shells only: decrypt once, let every child shell inherit.
+      profileExtra = ''
+        _sops_secrets="$HOME/.config/sops-nix/secrets"
+        [ -r "$_sops_secrets/openrouter_api_key" ] \
+          && export OPENROUTER_API_KEY="$(cat "$_sops_secrets/openrouter_api_key")"
+        unset _sops_secrets
+      '';
       initContent = ''
         [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
       '';
