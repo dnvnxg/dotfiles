@@ -1,0 +1,51 @@
+#+TITLE: dotfiles
+#+OPTIONS: toc:nil num:nil
+
+Nix config for my personal machines. Servers live in their own private repo.
+
+=hosts/= is the system layer (needs root), =home/= is the home layer
+(home-manager). On my own machines a single rebuild applies both.
+
+* Applying
+
+#+begin_src sh
+  sudo darwin-rebuild switch --flake ~/dotfiles              # macOS: system + home
+  sudo nixos-rebuild  switch --flake ~/dotfiles              # Linux: system + home
+  home-manager switch --flake ~/dotfiles#dxgriego@<system>   # home only, no root
+#+end_src
+
+The system rebuilds match hostname automatically. Home-only configurations are
+named per system: =dxgriego@aarch64-darwin=, =dxgriego@x86_64-linux=, etc. They
+set =custom.personalMachine = false=, so on a host I don't administer they won't
+touch =authorized_keys=, clone personal repos, or decrypt secrets.
+
+* Bootstrapping a new Mac
+
+=darwin-rebuild= is installed /by/ nix-darwin, so the first run has to come from
+the flake itself:
+
+#+begin_src sh
+  git clone https://github.com/dnvnxg/dotfiles ~/dotfiles
+  # add a darwinConfigurations."<hostname>" entry to flake.nix, then:
+  nix run github:LnL7/nix-darwin/nix-darwin-26.05#darwin-rebuild -- \
+    switch --flake ~/dotfiles#<hostname>
+#+end_src
+
+Afterwards =sudo darwin-rebuild switch --flake ~/dotfiles= works normally.
+
+* Secrets
+
+sops-encrypted and committed. My OpenPGP key (on both YubiKeys) edits them and
+authorizes machines; a per-machine age key does the unattended decryption at
+login, so no PIN is needed at boot.
+
+#+begin_src sh
+  sops secrets/secrets.yaml   # edit           - YubiKey PIN
+  nix run .#enroll-host       # authorize here - YubiKey PIN, once per machine
+#+end_src
+
+A machine can't read secrets until it's enrolled; nothing in this public repo is
+enough to bootstrap access on its own.
+
+To expose one as an env var, declare =sops.secrets.<name>= and export it from
+=programs.zsh.profileExtra= (login shells only, so it's read once and inherited).

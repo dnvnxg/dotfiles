@@ -91,10 +91,12 @@
 
     # Standalone, for a box I do not administer:
     #   home-manager switch --flake github:dnvnxg/dotfiles#dxgriego
-    homeConfigurations = {
-      "dxgriego" = mkGuestHome "x86_64-linux";
-      "dxgriego-aarch64" = mkGuestHome "aarch64-linux";
-    };
+    # One per system, explicitly named, so there is no wrong-architecture trap:
+    #   home-manager switch --flake .#dxgriego@aarch64-darwin
+    homeConfigurations = builtins.listToAttrs (map (system: {
+      name = "dxgriego@${system}";
+      value = mkGuestHome system;
+    }) systems);
 
     # `nix run .#enroll-host` - add this machine as an age recipient so it can
     # decrypt secrets unattended. Needs a YubiKey once, then never again.
