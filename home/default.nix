@@ -1,8 +1,8 @@
-{ config, pkgs, lib, username, ... }:
+{ config, pkgs, lib, username, gpgIdentity, ... }:
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
-  gpgKeys = import ../keys/gpg-keys.nix;
+  gpgKeys = import "${gpgIdentity}/keys.nix";
   homeDir = if isDarwin then "/Users/${username}" else "/home/${username}";
   cfg = config.custom;
 
@@ -56,7 +56,7 @@ in {
     programs.gpg = {
       enable = true;
       publicKeys = [
-        { source = ../keys/gpg-public-key.asc; trust = 5; }
+        { source = "${gpgIdentity}/public-key.asc"; trust = 5; }
       ];
     };
 

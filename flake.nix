@@ -7,6 +7,10 @@
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    gpg-identity = {
+      url = "github:dnvnxg/gpg";
+      flake = false;
+    };
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
@@ -19,7 +23,7 @@
     nix-homebrew.inputs.brew-src.follows = "brew-src";
   };
 
-  outputs = { self, nixpkgs, nix-darwin, home-manager, nix-homebrew, sops-nix, ... }:
+  outputs = { self, nixpkgs, nix-darwin, home-manager, nix-homebrew, sops-nix, gpg-identity, ... }:
   let
     systems = [ "aarch64-darwin" "x86_64-darwin" "aarch64-linux" "x86_64-linux" ];
     forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
@@ -39,7 +43,7 @@
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.users.${username} = import ./home/default.nix;
-          home-manager.extraSpecialArgs = { inherit username; };
+          home-manager.extraSpecialArgs = { inherit username; gpgIdentity = gpg-identity; };
           home-manager.sharedModules = [ sops-nix.homeManagerModules.sops ];
           users.users.${username}.home = "/Users/${username}";
           system.primaryUser = username;
@@ -52,7 +56,7 @@
     # Home config for a host someone else administers: user-level tooling only.
     mkGuestHome = system: home-manager.lib.homeManagerConfiguration {
       pkgs = nixpkgs.legacyPackages.${system};
-      extraSpecialArgs = { username = "dxgriego"; };
+      extraSpecialArgs = { username = "dxgriego"; gpgIdentity = gpg-identity; };
       modules = [
         sops-nix.homeManagerModules.sops
         ./home/default.nix
@@ -73,7 +77,7 @@
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.users.${username} = import ./home/default.nix;
-          home-manager.extraSpecialArgs = { inherit username; };
+          home-manager.extraSpecialArgs = { inherit username; gpgIdentity = gpg-identity; };
           home-manager.sharedModules = [ sops-nix.homeManagerModules.sops ];
           users.users.${username} = {
             isNormalUser = true;

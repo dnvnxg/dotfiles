@@ -17,6 +17,22 @@
         "type": "github"
       }
     },
+    "gpg-identity": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787441319,
+        "narHash": "sha256-SStBmfNO/9umkd5bJaAjl30VgCYMnKJhQxXlV583HMU=",
+        "owner": "dnvnxg",
+        "repo": "gpg",
+        "rev": "1bce384ec53240fbf63d200fea2c5e8f31c0011d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dnvnxg",
+        "repo": "gpg",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -98,6 +114,7 @@
     "root": {
       "inputs": {
         "brew-src": "brew-src",
+        "gpg-identity": "gpg-identity",
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
