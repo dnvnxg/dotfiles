@@ -115,7 +115,10 @@ in {
       text = lib.concatStringsSep "\n" gpgKeys.sshPublicKeys + "\n";
     };
 
-    home.packages = [ pkgs.sops ];
+    home.packages = with pkgs; [
+      sops
+      pi-coding-agent
+    ];
 
     # Secrets are committed to this repo encrypted to the OpenPGP key in keys/.
     # Decryption happens in a launchd agent (darwin) / user service (linux) at

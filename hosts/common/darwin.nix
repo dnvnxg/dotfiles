@@ -1,9 +1,5 @@
-{ username, ... }: {
+{ ... }: {
   imports = [ ./nix.nix ];
-
-  security.sudo.extraConfig = ''
-    ${username} ALL=(ALL) NOPASSWD: /nix/store/*/bin/darwin-rebuild
-  '';
 
   nix.gc = {
     automatic = true;
