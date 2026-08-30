@@ -1,7 +1,7 @@
 { config, pkgs, lib, username, gpgIdentity, ... }:
 let
-  isDarwin = pkgs.stdenv.isDarwin;
-  isLinux = pkgs.stdenv.isLinux;
+  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  isLinux = pkgs.stdenv.hostPlatform.isLinux;
   gpgKeys = import "${gpgIdentity}/keys.nix";
   homeDir = if isDarwin then "/Users/${username}" else "/home/${username}";
   cfg = config.custom;
