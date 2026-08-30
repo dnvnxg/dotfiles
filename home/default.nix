@@ -73,6 +73,7 @@ in {
 
     programs.password-store = {
       enable = lib.any (r: r.dest == ".password-store") cfg.gitRepos;
+      package = pkgs.pass.withExtensions (exts: [ exts.pass-otp ]);
       settings = { }; # explicit empty: keep pass on ~/.password-store, not the legacy XDG default
     };
 
